@@ -10,3 +10,14 @@ export class DatabaseError extends Data.TaggedError('DatabaseError')<{
   type: string;
   innerError?: unknown;
 }> {}
+
+export class NotUniqueError extends Data.TaggedError('NotUniqueError')<{
+  duplicateValue: unknown;
+  type: string;
+}> {}
+
+export class InvalidPhoneNumberError extends Data.TaggedError(
+  'InvalidPhoneNumber',
+)<{
+  employeeId: string;
+}> {}

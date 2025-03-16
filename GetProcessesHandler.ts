@@ -1,6 +1,5 @@
 import { APIGatewayProxyEventV2WithJWTAuthorizer } from 'aws-lambda/trigger/api-gateway-proxy';
 import { Effect } from 'effect';
-import { Process } from './model/process';
 import { Database, DynamoDatabase } from './services/DatabaseService';
 import { getTenantFromRequest, transformExitToApiResult } from './utils';
 import { RequestError } from './model/errors';
@@ -28,9 +27,7 @@ const getProcessEffect = (event: APIGatewayProxyEventV2WithJWTAuthorizer) => {
     const tenantId = yield* getTenantFromRequest(event);
 
     const database = yield* Database;
-    const process = yield* database.getProcessById(tenantId, processId);
-
-    return process;
+    return yield* database.getProcessById(tenantId, processId);
   });
 };
 
@@ -45,13 +42,3 @@ export async function getProcesses(
 
   return transformExitToApiResult(processResult);
 }
-//redeploy-pls
-//redeploy-pls
-//redeploy-pls
-//redeploy-pls
-//redeploy-pls
-//redeploy-pls
-//redeploy-pls
-//redeploy-pls
-//redeploy-pls
-//redeploy-pls

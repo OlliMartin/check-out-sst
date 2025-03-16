@@ -9,10 +9,15 @@ export const getTenantFromRequest = (
 ) => {
   const tenantId = event.requestContext.authorizer.jwt.claims['client_id'];
 
+  // Return ISE/500 in case client_id is not populated.
+  // That would mean the API GW route has no authorizer attached anymore.
   return !!tenantId
     ? Effect.succeed(tenantId.toString())
     : Effect.fail(
-        new RequestError({ message: 'Could not locate client id in token.' }),
+        new RequestError({
+          message: 'Could not locate client id in token.',
+          statusCode: 500,
+        }),
       );
 };
 

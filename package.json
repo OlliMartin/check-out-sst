@@ -35,6 +35,7 @@
     "packages/*"
   ],
   "dependencies": {
-    "effect": "^3.13.11"
+    "effect": "^3.13.11",
+    "libphonenumber-js": "^1.12.6"
   }
 }

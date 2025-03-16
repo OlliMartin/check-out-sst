@@ -1,12 +1,17 @@
-import { Effect, Schema } from 'effect';
+import { Effect, Schema, Stream } from 'effect';
 import { APIGatewayProxyResult } from 'aws-lambda';
 import { Database, DynamoDatabase } from './services/DatabaseService';
 import { APIGatewayProxyEventV2WithJWTAuthorizer } from 'aws-lambda/trigger/api-gateway-proxy';
 import { Employee, EmployeeSchema } from './model/employee';
-import { DatabaseError, RequestError } from './model/errors';
+import {
+  DatabaseError,
+  InvalidPhoneNumberError,
+  RequestError,
+} from './model/errors';
 import { ParseError } from 'effect/ParseResult';
 import { Process } from './model/process';
 import { getTenantFromRequest, transformExitToApiResult } from './utils';
+import { isValidPhoneNumber } from 'libphonenumber-js';
 
 const CreateEmployeesRequestSchema = Schema.NonEmptyArray(EmployeeSchema);
 
@@ -28,7 +33,7 @@ const parsePayload = (
 
     const jsonParsed = yield* Effect.try({
       try: () => JSON.parse(body),
-      catch: err =>
+      catch: () =>
         new RequestError({
           message: 'Could not parse request body.',
           statusCode: 400,
@@ -43,6 +48,23 @@ const parsePayload = (
     });
 
     return parserResult;
+  });
+};
+
+const verifyIdUniqueness = (
+  employees: readonly Employee[],
+): Effect.Effect<void, RequestError> => {
+  return Effect.gen(function* () {
+    const employeeIdCountUnique = new Set<string>(
+      employees.map(e => e.employeeId),
+    );
+
+    if (employeeIdCountUnique.size !== employees.length) {
+      yield* new RequestError({
+        message: 'Employee IDs must be unique.',
+        statusCode: 400,
+      });
+    }
   });
 };
 
@@ -73,19 +95,52 @@ const writeProcessSummary = (
   });
 };
 
+const validatePhoneNumber = (
+  employee: Employee,
+): Effect.Effect<Employee, InvalidPhoneNumberError> => {
+  if (employee.phoneNumber && !isValidPhoneNumber(employee.phoneNumber)) {
+    return Effect.fail(
+      new InvalidPhoneNumberError({ employeeId: employee.employeeId }),
+    );
+  }
+
+  return Effect.succeed(employee);
+};
+
 const processEmployeesEffect = (
   process: Process,
   employees: readonly Employee[],
-): Effect.Effect<void, any, Database> => {
-  return Effect.gen(function* () {
-    process = yield* indicateProcessStarted(process);
+): Effect.Effect<void, DatabaseError, Database> => {
+  return Effect.scoped(
+    Effect.gen(function* () {
+      process = yield* indicateProcessStarted(process);
 
-    yield* Effect.sleep('10 seconds');
+      const employeeStreamEff = Stream.fromIterable(employees).pipe(
+        Stream.partitionEither(e => validatePhoneNumber(e).pipe(Effect.either)),
+      );
 
-    process = yield* writeProcessSummary(process, employees);
+      const database = yield* Database;
+      const [invalidPhoneNumberStream, successful] = yield* employeeStreamEff;
 
-    yield* Effect.log(process);
-  });
+      const dbUpdateStream = yield* database.createEmployees(
+        process.tenantId,
+        successful,
+      );
+
+      const dbResult = yield* Stream.runCollect(
+        dbUpdateStream.pipe(Stream.either),
+      );
+
+      yield* Effect.log(
+        yield* Stream.runCollect(invalidPhoneNumberStream),
+        dbResult,
+      );
+
+      // Missing: Use the different streams to calculate #successful, #failed records and to generate error details,
+      // i.e. which record was rejected for which reason (invalid phone number, duplicate, ..)
+      process = yield* writeProcessSummary(process, employees);
+    }),
+  );
 };
 
 const createEmployeesEffect = (
@@ -99,6 +154,8 @@ const createEmployeesEffect = (
     const tenantId = yield* getTenantFromRequest(event);
     const processId = yield* getProcessId(event);
     const employees = yield* parsePayload(event.body);
+
+    yield* verifyIdUniqueness(employees);
 
     yield* Effect.log(
       `[${processId}] Received ${employees.length} employees to process for tenant ${tenantId}.`,
@@ -125,7 +182,3 @@ export async function createEmployees(
 
   return transformExitToApiResult(employeeResult);
 }
-//redeploy-pls
-//redeploy-pls
-//redeploy-pls
-//redeploy-pls
