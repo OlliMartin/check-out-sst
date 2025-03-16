@@ -1,4 +1,4 @@
-import { Resource } from "sst";
+// import { Resource } from 'sst';
 
 export async function upload() {
   return {
@@ -8,8 +8,8 @@ export async function upload() {
 }
 
 export async function latest() {
-    return {
-        statusCode: 200,
-        body: 'def',
-    };
+  return {
+    statusCode: 200,
+    body: 'def',
+  };
 }

@@ -5,6 +5,28 @@
 
 declare module "sst" {
   export interface Resource {
+    "AcaadTenants": {
+      "id": string
+      "type": "sst.aws.CognitoUserPool"
+    }
+    "CompanyA": {
+      "id": string
+      "secret": string
+      "type": "sst.aws.CognitoUserPoolClient"
+    }
+    "CompanyB": {
+      "id": string
+      "secret": string
+      "type": "sst.aws.CognitoUserPoolClient"
+    }
+    "Employees": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "Processes": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
     "PublicApiGateway": {
       "type": "sst.aws.ApiGatewayV2"
       "url": string
