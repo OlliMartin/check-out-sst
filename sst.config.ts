@@ -1,14 +1,26 @@
-import { SSTConfig } from "sst";
-import { ExampleStack } from "./stacks/ExampleStack";
+/// <reference path="./.sst/platform/config.d.ts" />
 
-export default {
-  config(_input) {
+export default $config({
+  app(input) {
     return {
-      name: "rest-api-ts",
-      region: "us-east-1",
+      name: "aws-api",
+      removal: input?.stage === "production" ? "retain" : "remove",
+      home: "aws",
+      providers: {
+        aws: {
+          profile: input?.stage === "production" ? "acaad-prod" : "acaad-dev",
+        }
+      }
     };
   },
-  stacks(app) {
-    app.stack(ExampleStack);
-  }
-} satisfies SSTConfig;
+  async run() {
+    const api = new sst.aws.ApiGatewayV2("PublicApiGateway");
+
+    api.route("GET /", {
+      handler: "index.upload",
+    });
+    api.route("GET /latest", {
+      handler: "index.latest",
+    });
+  },
+});

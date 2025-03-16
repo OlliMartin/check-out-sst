@@ -12,11 +12,17 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "sst": "^3.9.39",
+    "@eslint/js": "^9.22.0",
+    "@tsconfig/node18": "^18.2.4",
+    "@typescript-eslint/eslint-plugin": "^8.26.1",
+    "@typescript-eslint/parser": "^8.26.1",
     "aws-cdk-lib": "2.142.1",
     "constructs": "10.3.0",
+    "eslint": "^9.22.0",
+    "globals": "^16.0.0",
+    "sst": "^3.9.39",
     "typescript": "^5.8.2",
-    "@tsconfig/node18": "^18.2.4"
+    "typescript-eslint": "^8.26.1"
   },
   "workspaces": [
     "packages/*"
