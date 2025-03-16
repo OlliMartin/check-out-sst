@@ -6,3 +6,5 @@ export const EmployeeSchema = Schema.Struct({
   lastName: Schema.String,
   phoneNumber: Schema.String,
 });
+
+export type Employee = Schema.Schema.Type<typeof EmployeeSchema>;

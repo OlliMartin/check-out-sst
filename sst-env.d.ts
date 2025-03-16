@@ -9,16 +9,6 @@ declare module "sst" {
       "id": string
       "type": "sst.aws.CognitoUserPool"
     }
-    "CompanyA": {
-      "id": string
-      "secret": string
-      "type": "sst.aws.CognitoUserPoolClient"
-    }
-    "CompanyB": {
-      "id": string
-      "secret": string
-      "type": "sst.aws.CognitoUserPoolClient"
-    }
     "Employees": {
       "name": string
       "type": "sst.aws.Dynamo"

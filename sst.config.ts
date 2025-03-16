@@ -19,8 +19,16 @@ export default $config({
   },
   async run() {
     const pool = new sst.aws.CognitoUserPool('AcaadTenants');
-    const poolClient1 = pool.addClient('CompanyA');
-    const poolClient2 = pool.addClient('CompanyB');
+
+    const poolClient1 = new aws.cognito.UserPoolClient('AcaadClient1', {
+      name: 'CompanyA',
+      userPoolId: pool.id,
+      allowedOauthFlowsUserPoolClient: true,
+      allowedOauthFlows: ['client_credentials'],
+      allowedOauthScopes: ['default-m2m-resource-server-50swsd/read'],
+      supportedIdentityProviders: ['COGNITO'],
+      generateSecret: true,
+    });
 
     const employeeTable = new sst.aws.Dynamo('Employees', {
       fields: {
@@ -60,11 +68,7 @@ export default $config({
       name: 'AcaadCognitoAuthorizer',
       jwt: {
         issuer: $interpolate`https://cognito-idp.${aws.getRegionOutput().name}.amazonaws.com/${pool.id}`,
-        audiences: [
-          poolClient1.id,
-          poolClient2.id,
-          '3ovb2s8eip3q768hpnk5fo4a07' /* Manually created app allowing client_credentials flow  */,
-        ],
+        audiences: [poolClient1.id],
       },
     });
 
@@ -72,7 +76,7 @@ export default $config({
       ...LAMBDA_DEFAULTS,
       allowMethods: ['POST'],
       link: [employeeTable, processTable],
-      handler: 'functions/employees/CreateHandler.upload',
+      handler: 'functions/employees/CreateHandler.createEmployees',
       /*
         Async lambda 
         -> Return http response directly to API Gw (30s integration timeout) 
@@ -85,7 +89,7 @@ export default $config({
       ...LAMBDA_DEFAULTS,
       allowMethods: ['GET'],
       link: [processTable],
-      handler: 'functions/processes/GetHandler.latest',
+      handler: 'functions/processes/GetHandler.getProcesses',
       timeout: '15 seconds',
     });
   },
