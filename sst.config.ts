@@ -60,10 +60,11 @@ export default $config({
 
     const processTable = new sst.aws.Dynamo('Processes', {
       fields: {
+        tenantId: 'string',
         processId: 'string',
         // ttl: 'number',
       },
-      primaryIndex: { hashKey: 'processId' },
+      primaryIndex: { hashKey: 'processId', rangeKey: 'tenantId' },
       ttl: 'ttl',
     });
 
