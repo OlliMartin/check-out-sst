@@ -10,3 +10,9 @@ export class Database extends Context.Tag('DatabaseService')<
     readonly getProcessById: (processId: string) => Effect.Effect<unknown>;
   }
 >() {}
+
+export const DynamoDatabase = Database.of({
+    createEmployees: (employees) => Effect.succeed([]),
+    upsertProcess: (processId) => Effect.succeed(Effect.void),
+    getProcessById: (processId) => Effect.succeed([])
+})

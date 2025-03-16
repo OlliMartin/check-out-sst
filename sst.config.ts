@@ -20,12 +20,29 @@ export default $config({
   async run() {
     const pool = new sst.aws.CognitoUserPool('AcaadTenants');
 
+    const poolDomain = new aws.cognito.UserPoolDomain('main', {
+      domain: `acaad-${$app.stage ?? 'fallback'}`,
+      userPoolId: pool.id,
+    });
+
+    const resource = new aws.cognito.ResourceServer('resource', {
+      identifier: 'https://acaad.dev',
+      name: 'AcaadTenants',
+      scopes: [
+        {
+          scopeName: 'AcaadTenants',
+          scopeDescription: 'Scope for Employee API',
+        },
+      ],
+      userPoolId: pool.id,
+    });
+
     const poolClient1 = new aws.cognito.UserPoolClient('AcaadClient1', {
       name: 'CompanyA',
       userPoolId: pool.id,
       allowedOauthFlowsUserPoolClient: true,
       allowedOauthFlows: ['client_credentials'],
-      allowedOauthScopes: ['default-m2m-resource-server-50swsd/read'],
+      allowedOauthScopes: ['https://acaad.dev/AcaadTenants'],
       supportedIdentityProviders: ['COGNITO'],
       generateSecret: true,
     });
@@ -76,7 +93,7 @@ export default $config({
       ...LAMBDA_DEFAULTS,
       allowMethods: ['POST'],
       link: [employeeTable, processTable],
-      handler: 'functions/employees/CreateHandler.createEmployees',
+      handler: 'CreateEmployeesHandler.createEmployees',
       /*
         Async lambda 
         -> Return http response directly to API Gw (30s integration timeout) 
@@ -89,7 +106,7 @@ export default $config({
       ...LAMBDA_DEFAULTS,
       allowMethods: ['GET'],
       link: [processTable],
-      handler: 'functions/processes/GetHandler.getProcesses',
+      handler: 'GetProcessesHandler.getProcesses',
       timeout: '15 seconds',
     });
   },
